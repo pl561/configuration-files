@@ -1,70 +1,50 @@
 (custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
+  ;; custom-set-variables was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(inhibit-startup-screen t)
  '(show-paren-mode t)
- '(size-indication-mode t))
+ '(size-indication-mode t)
+ '(uniquify-buffer-name-style (quote forward) nil (uniquify)))
 (custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
+  ;; custom-set-faces was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
+  ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
  )
 
-(setq auto-mode-alist '(("\\.sage\\'"   . python-mode)))
+;; MELPA PACKAGES
+(require 'package) ;; You might already have this line
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.org/packages/") t)
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize) ;; You might already have this line
 
 
-(add-to-list 'load-path "~/.emacs.d/el-get/el-get")
 
-(unless (require 'el-get nil 'noerror)
-  (with-current-buffer
-      (url-retrieve-synchronously
-       "https://raw.githubusercontent.com/dimitri/el-get/master/el-get-install.el")
-    (goto-char (point-max))
-    (eval-print-last-sexp)))
+;; prog-mode ##########################################
 
-(add-to-list 'el-get-recipe-path "~/.emacs.d/el-get-user/recipes")
-(el-get 'sync)
-
-(load-library "iso-transl") ;; fixes dead circumflex
-
-;; handles parenthesis, brackets, etc
-(electric-pair-mode 1)
+;; code folding minor-mode
+(add-hook 'prog-mode-hook 'hs-minor-mode)
+;; modify minor mode key: hs-toggle-hidding to C-=
+(defun my-new-map ()
+  "remap C-c @ C-c to C-=."
+  (local-set-key (kbd "C-=") 'hs-toggle-hiding))
+(add-hook 'hs-minor-mode-hook 'my-new-map)
 
 
-;; toggle code features
-(defun toggle-selective-display (column)
-  (interactive "P")
-  (set-selective-display
-   (or column
-       (unless selective-display
-	 (1+ (current-column))))))
+;; python-mode ########################################
 
-(defun toggle-hiding (column)
-  (interactive "P")
-  (if hs-minor-mode
-      (if (condition-case nil
-	      (hs-toggle-hiding)
-	    (error t))
-	  (hs-show-all))
-    (toggle-selective-display column)))
-
-(load-library "hideshow")
-
-(global-set-key (kbd "C-=") 'toggle-hiding)
-(global-set-key (kbd "C-\\") 'toggle-selective-display)
-
-(add-hook 'c-mode-common-hook   'hs-minor-mode)
-(add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
-(add-hook 'java-mode-hook       'hs-minor-mode)
-(add-hook 'lisp-mode-hook       'hs-minor-mode)
-(add-hook 'perl-mode-hook       'hs-minor-mode)
-(add-hook 'sh-mode-hook         'hs-minor-mode)
-
+(add-hook 'python-mode-hook 'ac-anaconda-setup)
+(add-hook 'python-mode-hook 'anaconda-mode)
+;;(add-to-list 'auto-mode-alist '("\\.py\\'" . anaconda-mode))
+(add-to-list 'auto-mode-alist '("\\.sage\\'" . python-mode))
+;;(ac-set-trigger-key "TAB")
 
 ; #############################################
 ; To load python templates
@@ -81,24 +61,58 @@
     )
   )
 
-; tab for easier autocompletion
-;; http://www.emacswiki.org/emacs/TabCompletion
+;; latex-mode #########################################
+;; http://emacs.stackexchange.com/questions/5938/how-to-make-auto-complete-work-in-auctex-mode
+ 
 
-(defun smart-tab ()
-  "This smart tab is minibuffer compliant: it acts as usual in
-    the minibuffer. Else, if mark is active, indents region. Else if
-    point is at the end of a symbol, expands it. Else indents the
-    current line."
-  (interactive)
-  (if (minibufferp)
-      (unless (minibuffer-complete)
-	(dabbrev-expand nil))
-    (if mark-active
-	(indent-region (region-beginning)
-		       (region-end))
-      (if (looking-at "\\_>")
-	  (dabbrev-expand nil)
-	(indent-for-tab-command)))))
+(defun my-ac-latex-mode () ; add ac-sources for latex
+  ;; yasnippet code 'optional', before auto-complete
+  (require 'yasnippet)
+  ;; auto-complete setup, sequence is important
+  (require 'auto-complete)
+  (add-to-list 'ac-modes 'latex-mode) ; beware of using 'LaTeX-mode instead
+  (require 'ac-math) ; package should be installed first
 
-(global-set-key [tab] 'smart-tab)
+   (setq ac-sources
+         (append '(ac-source-math-unicode
+           ac-source-math-latex
+           ac-source-latex-commands)
+                 ac-sources))
+   (yas-global-mode 1)
+   (ac-set-trigger-key "TAB")
+   (global-auto-complete-mode t)
+
+   (setq ac-math-unicode-in-math-p t)
+   (ac-flyspell-workaround) ; fixes a known bug of delay due to flyspell (if it is there)
+   (add-to-list 'ac-modes 'org-mode) ; auto-complete for org-mode (optional)
+   (require 'auto-complete-config) ; should be after add-to-list 'ac-modes and hooks
+   (ac-config-default)
+   (setq ac-auto-start nil)            ; if t starts ac at startup automatically
+   (setq ac-auto-show-menu t)
+   )
+
+(add-hook 'LaTeX-mode-hook 'my-ac-latex-mode)
+
+
+
+
+(load-library "iso-transl")
+
+;; fichier lisp pour tester et etendre emacs
+
+;;(add-to-list 'load-path "~/.emacs.d/lisp/")
+
+;(load "~/.emacs.d/lisp/test")
+;(load "~/.emacs.d/lisp/macros")
+;(load "~/.emacs.d/lisp/xah_brackets_insertion")
+
+;;(autoload 'end1 "test titre" "description" t)
+
+
+
+
+
+
+
+
 
