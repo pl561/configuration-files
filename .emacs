@@ -189,7 +189,10 @@
 (global-set-key (kbd "<f12>") 'next-buffer)
 
 
-
+(global-unset-key (kbd "M-j"))
+(global-unset-key (kbd "M-k"))
+(global-set-key (kbd "M-j") (lambda () (interactive) (other-window 1)))
+(global-set-key (kbd "M-k") (lambda () (interactive) (other-window -1)))
 
 
 
