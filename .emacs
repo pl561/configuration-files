@@ -112,6 +112,83 @@
 
 
 
+(defun xah-insert-bracket-pair (φleft-bracket φright-bracket)
+  "Wrap or Insert a matching bracket and place cursor in between. If there's a text selection, wrap brackets around it. Else, smartly decide wrap or insert. (basically, if there's no char after cursor, just insert bracket pair.) φleft-bracket ＆ φright-bracket are strings. URL `http://ergoemacs.org/emacs/elisp_insert_brackets_by_pair.html' Version 2015-04-19"
+  (if (use-region-p)
+      (progn
+        (let (
+              (ξp1 (region-beginning))
+              (ξp2 (region-end)))
+          (goto-char ξp2)
+          (insert φright-bracket)
+          (goto-char ξp1)
+          (insert φleft-bracket)
+          (goto-char (+ ξp2 2))))
+    (progn ; no text selection
+      (if
+          (or
+           (looking-at "[^-_[:alnum:]]")
+           (eq (point) (point-max)))
+          (progn
+            (insert φleft-bracket φright-bracket)
+            (search-backward φright-bracket ))
+        (progn
+          (let (ξp1 ξp2)
+            ;; basically, want all alphanumeric, plus hyphen and underscore, but don't want space or punctuations. Also want chinese.
+            ;; 我有一帘幽梦，不知与谁能共。多少秘密在其中，欲诉无人能懂。
+            (skip-chars-backward "-_[:alnum:]")
+            (setq ξp1 (point))
+            (skip-chars-forward "-_[:alnum:]")
+            (setq ξp2 (point))
+            (goto-char ξp2)
+            (insert φright-bracket)
+            (goto-char ξp1)
+            (insert φleft-bracket)
+            (goto-char (+ ξp2 (length φleft-bracket)))))))))
+
+
+(defun xah-insert-paren () (interactive) (xah-insert-bracket-pair "(" ")") )
+(defun xah-insert-bracket () (interactive) (xah-insert-bracket-pair "[" "]") )
+(defun xah-insert-brace () (interactive) (xah-insert-bracket-pair "{" "}") )
+(defun xah-insert-greater-less () (interactive) (xah-insert-bracket-pair "<" ">") )
+(defun xah-insert-double-quotes () (interactive) (xah-insert-bracket-pair "\"" "\"") )
+(defun xah-insert-simple-quotes () (interactive) (xah-insert-bracket-pair "\'" "\'") )
+
+(global-set-key (kbd "M-p (") 'xah-insert-paren)
+(global-set-key (kbd "M-p [") 'xah-insert-bracket)
+(global-set-key (kbd "M-p {") 'xah-insert-brace)
+(global-set-key (kbd "M-p <") 'xah-insert-greater-less)
+(global-set-key (kbd "M-p \"") 'xah-insert-double-quotes)
+(global-set-key (kbd "M-p \'") 'xah-insert-simple-quotes)
+
+
+(global-set-key (kbd "M-p p") 'nl_prev_custom)
+
+(fset 'nl_next_custom
+      [?\C-e return tab])
+(global-set-key (kbd "M-p n") 'nl_next_custom)
+
+;; duplicate current line
+(defun duplicate_line()
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  (yank)
+  (newline)
+  (yank)
+)
+(global-set-key (kbd "\C-c\C-d") 'duplicate_line)
+
+;; reload a modified file on disk in emacs buffer
+(global-set-key (kbd "<f5>") (lambda ()
+                                (interactive)
+                                (revert-buffer t t t)
+                                (message "buffer is reverted")))
+
+(global-set-key (kbd "<f11>") 'previous-buffer)
+(global-set-key (kbd "<f12>") 'next-buffer)
+
+
 
 
 
