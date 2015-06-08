@@ -15,6 +15,8 @@
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
  )
+(load-library "iso-transl")
+
 
 ;; MELPA PACKAGES
 (require 'package) ;; You might already have this line
@@ -33,6 +35,7 @@
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 ;; modify minor mode key: hs-toggle-hidding to C-=
 (defun my-new-map ()
+  (local-set-key (kbd "C-+") 'hs-hide-all))
   "remap C-c @ C-c to C-=."
   (local-set-key (kbd "C-=") 'hs-toggle-hiding))
 (add-hook 'hs-minor-mode-hook 'my-new-map)
@@ -96,7 +99,7 @@
 
 
 
-(load-library "iso-transl")
+
 
 ;; fichier lisp pour tester et etendre emacs
 
@@ -161,7 +164,8 @@
 (global-set-key (kbd "M-p \"") 'xah-insert-double-quotes)
 (global-set-key (kbd "M-p \'") 'xah-insert-simple-quotes)
 
-
+(fset 'nl_prev_custom
+      [?\C-a return \C-p tab])
 (global-set-key (kbd "M-p p") 'nl_prev_custom)
 
 (fset 'nl_next_custom
@@ -176,6 +180,7 @@
   (yank)
   (newline)
   (yank)
+  (message "current line has been duplicated")
 )
 (global-set-key (kbd "\C-c\C-d") 'duplicate_line)
 
