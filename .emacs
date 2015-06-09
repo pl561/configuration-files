@@ -31,6 +31,10 @@
 
 ;; prog-mode ##########################################
 
+(add-hook 'prog-mode-hook 'highlight-current-line-minor-mode)
+(add-hook 'prog-mode-hook 'highlight-indentation-mode)
+(highlight-current-line-set-bg-color "gray")
+
 ;; code folding minor-mode
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 ;; modify minor mode key: hs-toggle-hidding to C-=
