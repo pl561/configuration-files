@@ -35,7 +35,7 @@
 (add-hook 'prog-mode-hook 'hs-minor-mode)
 ;; modify minor mode key: hs-toggle-hidding to C-=
 (defun my-new-map ()
-  (local-set-key (kbd "C-+") 'hs-hide-all))
+  (local-set-key (kbd "C-+") 'hs-hide-all)
   "remap C-c @ C-c to C-=."
   (local-set-key (kbd "C-=") 'hs-toggle-hiding))
 (add-hook 'hs-minor-mode-hook 'my-new-map)
@@ -96,11 +96,6 @@
 
 (add-hook 'LaTeX-mode-hook 'my-ac-latex-mode)
 
-
-
-
-
-
 ;; fichier lisp pour tester et etendre emacs
 
 ;;(add-to-list 'load-path "~/.emacs.d/lisp/")
@@ -110,8 +105,6 @@
 ;(load "~/.emacs.d/lisp/xah_brackets_insertion")
 
 ;;(autoload 'end1 "test titre" "description" t)
-
-
 
 
 
@@ -164,12 +157,21 @@
 (global-set-key (kbd "M-p \"") 'xah-insert-double-quotes)
 (global-set-key (kbd "M-p \'") 'xah-insert-simple-quotes)
 
-(fset 'nl_prev_custom
-      [?\C-a return \C-p tab])
+; indented newline above current line
+(defun nl_prev_custom ()
+  (beginning-of-line)
+  (newline)
+  (previous-line)
+  (indent-according-to-mode)
+)
 (global-set-key (kbd "M-p p") 'nl_prev_custom)
 
-(fset 'nl_next_custom
-      [?\C-e return tab])
+;indented newline below current line
+(defun nl_next_custom ()
+  (end-of-line)
+  (newline)
+  (indent-accordding-to-mode)
+)
 (global-set-key (kbd "M-p n") 'nl_next_custom)
 
 ;; duplicate current line
@@ -245,4 +247,4 @@ version 2014-10-28"
             (shell-command ξcmdStr "*xah-run-current-file output*" ))
         (message "No recognized program file suffix for this file.")))))
 
-(global-set-key (kbd "<f8>") 'xah-run-current-file)
+(global-set-key (kbd "C-return") 'xah-run-current-file)
