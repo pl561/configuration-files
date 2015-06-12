@@ -28,6 +28,10 @@
 (package-initialize) ;; You might already have this line
 
 
+;; general
+(require 'auto-complete-config)
+(ac-config-default)
+(setq ac-auto-show-menu (* ac-delay 1))
 
 ;; prog-mode ##########################################
 
