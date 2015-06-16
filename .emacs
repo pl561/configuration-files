@@ -211,7 +211,11 @@
 (global-set-key (kbd "M-j") (lambda () (interactive) (other-window 1)))
 (global-set-key (kbd "M-k") (lambda () (interactive) (other-window -1)))
 
-
+; resize current buffer
+(global-set-key (kbd "<-up>") 'shrink-window)
+(global-set-key (kbd "<C-down>") 'enlarge-window)
+(global-set-key (kbd "<C-left>") 'shrink-window-horizontally)
+(global-set-key (kbd "<C-right>") 'enlarge-window-horizontally)
 
 ;; execute python file in emacs shell
 
