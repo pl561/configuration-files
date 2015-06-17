@@ -29,10 +29,17 @@
 
 
 ;; general
+
+; ac-mode
 (require 'auto-complete-config)
 (ac-config-default)
 (setq ac-auto-show-menu (* ac-delay 1))
 (global-set-key (kbd "<tab>") 'ac-start)
+
+; word wrap
+(turn-on-auto-fill) 
+(set-fill-column 80)
+
 
 
 ;; prog-mode ##########################################
