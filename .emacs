@@ -27,26 +27,17 @@
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize) ;; You might already have this line
 
-
 ;; general
-
-; ac-mode
 (require 'auto-complete-config)
 (ac-config-default)
 (setq ac-auto-show-menu (* ac-delay 1))
 (global-set-key (kbd "<tab>") 'ac-start)
 
-; word wrap
-(turn-on-auto-fill) 
-(set-fill-column 80)
-
-
-
 ;; prog-mode ##########################################
 
 (add-hook 'prog-mode-hook 'highlight-current-line-minor-mode)
 (add-hook 'prog-mode-hook 'highlight-indentation-mode)
-(highlight-current-line-set-bg-color "gray")
+;(setq highlight-current-line-set-bg-color "gray")
 
 ;; code folding minor-mode
 (add-hook 'prog-mode-hook 'hs-minor-mode)
@@ -57,11 +48,30 @@
   (local-set-key (kbd "C-=") 'hs-toggle-hiding))
 (add-hook 'hs-minor-mode-hook 'my-new-map)
 
+;; octave-mode ########################################
+(autoload 'octave-mode "octave-mod" nil t)
+(setq auto-mode-alist
+      (cons '("\\.m$" . octave-mode) auto-mode-alist))
+
+(add-hook 'octave-mode-hook
+          (lambda ()
+            (abbrev-mode 1)
+            (auto-fill-mode 1)
+            (if (eq window-system 'x)
+                (font-lock-mode 1))))
 
 ;; python-mode ########################################
 
 (add-hook 'python-mode-hook 'ac-anaconda-setup)
+
 (add-hook 'python-mode-hook 'anaconda-mode)
+
+(defun my-ac-custom ()
+  (ac-auto-start nil)
+  (local-set-key (kbd "TAB") 'ac-start)
+)
+;(add-hook 'python-mode-hook 'my-ac-custom)
+
 ;;(add-to-list 'auto-mode-alist '("\\.py\\'" . anaconda-mode))
 (add-to-list 'auto-mode-alist '("\\.sage\\'" . python-mode))
 ;;(ac-set-trigger-key "TAB")
@@ -176,6 +186,7 @@
 
 ; indented newline above current line
 (defun nl_prev_custom ()
+  (interactive)
   (beginning-of-line)
   (newline)
   (previous-line)
@@ -185,14 +196,25 @@
 
 ;indented newline below current line
 (defun nl_next_custom ()
+  (interactive)
   (end-of-line)
   (newline)
-  (indent-accordding-to-mode)
+  (indent-according-to-mode)
 )
 (global-set-key (kbd "M-p n") 'nl_next_custom)
 
+
 ;; duplicate current line
-(defun duplicate_line()
+(defun my_copy_line()
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  (yank)
+)
+(global-set-key (kbd "\C-c\C-w") 'my_copy_line)
+
+;; duplicate current line
+(defun my_duplicate_line()
   (interactive)
   (move-beginning-of-line 1)
   (kill-line)
@@ -201,13 +223,19 @@
   (yank)
   (message "current line has been duplicated")
 )
-(global-set-key (kbd "\C-c\C-d") 'duplicate_line)
+(global-set-key (kbd "\C-c\C-d") 'my_duplicate_line)
 
 ;; reload a modified file on disk in emacs buffer
 (global-set-key (kbd "<f5>") (lambda ()
                                 (interactive)
                                 (revert-buffer t t t)
                                 (message "buffer is reverted")))
+
+;; reload coloration in emacs buffer
+(global-set-key (kbd "<f6>") (lambda ()
+                                (interactive)
+                                (font-lock-fontify-block)
+                                (message "Coloration refreshed in buffer.")))
 
 (global-set-key (kbd "<f11>") 'previous-buffer)
 (global-set-key (kbd "<f12>") 'next-buffer)
@@ -218,11 +246,13 @@
 (global-set-key (kbd "M-j") (lambda () (interactive) (other-window 1)))
 (global-set-key (kbd "M-k") (lambda () (interactive) (other-window -1)))
 
+
 ; resize current buffer
-(global-set-key (kbd "<-up>") 'shrink-window)
+(global-set-key (kbd "<C-up>") 'shrink-window)
 (global-set-key (kbd "<C-down>") 'enlarge-window)
 (global-set-key (kbd "<C-left>") 'shrink-window-horizontally)
 (global-set-key (kbd "<C-right>") 'enlarge-window-horizontally)
+
 
 ;; execute python file in emacs shell
 
@@ -265,7 +295,9 @@ version 2014-10-28"
       (if ξprogName
           (progn
             (message "Running…")
+	    ;(message ξcmdStr)
             (shell-command ξcmdStr "*xah-run-current-file output*" ))
+	    ;(shell-command ξcmdStr "*terminal*" ))
         (message "No recognized program file suffix for this file.")))))
 
-(global-set-key (kbd "C-return") 'xah-run-current-file)
+(global-set-key (kbd "<C-return>") 'xah-run-current-file)
