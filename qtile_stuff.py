@@ -51,7 +51,7 @@ from libqtile.dgroups import simple_key_binder
 dgroups_key_binder = simple_key_binder("mod3")
 
 
-# Layouts
+# Layouts: http://docs.qtile.org/en/latest/manual/ref/layouts.html
 from libqtile import layout
 layouts = [
     layout.Max(),
