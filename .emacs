@@ -1,22 +1,205 @@
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(blink-cursor-mode nil)
  '(column-number-mode t)
+ '(custom-enabled-themes (quote (tango)))
  '(inhibit-startup-screen t)
  '(show-paren-mode t)
  '(size-indication-mode t)
  '(uniquify-buffer-name-style (quote forward) nil (uniquify)))
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
-(load-library "iso-transl")
 
+(electric-pair-mode t)
+
+(load-library "iso-transl") ;; handles circumflex
+
+(setq scroll-step 1) ;; scrolling with kb line by line
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1))) ;; one line at a time
+(setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+
+
+(global-set-key (kbd "<f7>") 'scroll-down-line)
+(global-set-key (kbd "<f8>") 'scroll-up-line)
+
+; indented newline above current line
+(defun nl_prev_custom ()
+  (interactive)
+  (beginning-of-line)
+  (newline)
+  (previous-line)
+  (indent-according-to-mode)
+)
+(global-set-key (kbd "M-p p") 'nl_prev_custom)
+
+;indented newline below current line
+(defun nl_next_custom ()
+  (interactive)
+  (end-of-line)
+  (newline)
+  (indent-according-to-mode)
+)
+(global-set-key (kbd "M-p n") 'nl_next_custom)
+
+
+;; duplicate current line
+(defun my_copy_line()
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  (yank)
+)
+(global-set-key (kbd "\C-c\C-w") 'my_copy_line)
+
+;; duplicate current line
+(defun my_duplicate_line()
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  (yank)
+  (newline)
+  (yank)
+  (message "current line has been duplicated")
+)
+(global-set-key (kbd "\C-c\C-d") 'my_duplicate_line)
+
+(global-auto-revert-mode t)
+;; reload a modified file on disk in emacs buffer
+(global-set-key (kbd "<f5>") (lambda ()
+                                (interactive)
+                                (revert-buffer t t t)
+                                (message "buffer is reverted")))
+
+;; reload coloration in emacs buffer
+(global-set-key (kbd "<f6>") (lambda ()
+                                (interactive)
+                                (font-lock-fontify-block)
+                                (message "Coloration refreshed in buffer.")))
+
+;; change current buffer to another opened one
+(global-set-key (kbd "<f11>") 'previous-buffer)
+(global-set-key (kbd "<f12>") 'next-buffer)
+
+;; switch between displayed buffers
+(global-unset-key (kbd "M-j"))
+(global-unset-key (kbd "M-k"))
+(global-set-key (kbd "M-j") (lambda () (interactive) (other-window 1)))
+(global-set-key (kbd "M-k") (lambda () (interactive) (other-window -1)))
+
+; resize current buffer
+(global-set-key (kbd "<C-up>") 'shrink-window)
+(global-set-key (kbd "<C-down>") 'enlarge-window)
+(global-set-key (kbd "<C-left>") 'shrink-window-horizontally)
+(global-set-key (kbd "<C-right>") 'enlarge-window-horizontally)
+
+
+;; custom moving forward/backward words
+;; http://stackoverflow.com/questions/1771102/changing-emacs-forward-word-behaviour/1772365#1772365
+(defun my-syntax-class (char)
+  "Return ?s, ?w or ?p depending or whether CHAR is a white-space, word or punctuation character."
+  (pcase (char-syntax char)
+      (`?\s ?s)
+      (`?w ?w)
+      (`?_ ?w)
+      (_ ?p)))
+
+(defun my-forward-word (&optional arg)
+  "Move point forward a word (simulate behavior of Far Manager's editor).
+With prefix argument ARG, do it ARG times if positive, or move backwards ARG times if negative."
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (let* ((backward (< arg 0))
+         (count (abs arg))
+         (char-next
+          (if backward 'char-before 'char-after))
+         (skip-syntax
+          (if backward 'skip-syntax-backward 'skip-syntax-forward))
+         (skip-char
+          (if backward 'backward-char 'forward-char))
+         prev-char next-char)
+    (while (> count 0)
+      (setq next-char (funcall char-next))
+      (loop
+       (if (or                          ; skip one char at a time for whitespace,
+            (eql next-char ?\n)         ; in order to stop on newlines
+            (eql (char-syntax next-char) ?\s))
+           (funcall skip-char)
+         (funcall skip-syntax (char-to-string (char-syntax next-char))))
+       (setq prev-char next-char)
+       (setq next-char (funcall char-next))
+       ;; (message (format "Prev: %c %c %c Next: %c %c %c"
+       ;;                   prev-char (char-syntax prev-char) (my-syntax-class prev-char)
+       ;;                   next-char (char-syntax next-char) (my-syntax-class next-char)))
+       (when
+           (or
+            (eql prev-char ?\n)         ; stop on newlines
+            (eql next-char ?\n)
+            (and                        ; stop on word -> punctuation
+             (eql (my-syntax-class prev-char) ?w)
+             (eql (my-syntax-class next-char) ?p))
+            (and                        ; stop on word -> whitespace
+             this-command-keys-shift-translated ; when selecting
+             (eql (my-syntax-class prev-char) ?w)
+             (eql (my-syntax-class next-char) ?s))
+            (and                        ; stop on whitespace -> non-whitespace
+             (not backward)             ; when going forward
+             (not this-command-keys-shift-translated) ; and not selecting
+             (eql (my-syntax-class prev-char) ?s)
+             (not (eql (my-syntax-class next-char) ?s)))
+            (and                        ; stop on non-whitespace -> whitespace
+             backward                   ; when going backward
+             (not this-command-keys-shift-translated) ; and not selecting
+             (not (eql (my-syntax-class prev-char) ?s))
+             (eql (my-syntax-class next-char) ?s))
+            )
+         (return))
+       )
+      (setq count (1- count)))))
+
+(defun delete-word (&optional arg)
+  "Delete characters forward until encountering the end of a word.
+With argument ARG, do this that many times."
+  (interactive "p")
+  (delete-region (point) (progn (my-forward-word arg) (point))))
+
+(defun backward-delete-word (arg)
+  "Delete characters backward until encountering the beginning of a word.
+With argument ARG, do this that many times."
+  (interactive "p")
+  (delete-word (- arg)))
+
+(defun my-backward-word (&optional arg)
+  (interactive "^p")
+  (or arg (setq arg 1))
+  (my-forward-word (- arg)))
+
+;; custom M-f/M-b/M-d/M-backspace
+;; (global-set-key (kbd "C-<left>") 'my-backward-word)
+;; (global-set-key (kbd "C-<right>") 'my-forward-word)
+;; (global-set-key (kbd "C-<delete>") 'delete-word)
+;; (global-set-key (kbd "C-<backspace>") 'backward-delete-word)
+
+;; (global-set-key (kbd "M-b") 'my-backward-word)
+;; (global-set-key (kbd "M-f") 'my-forward-word)
+;; (global-set-key (kbd "M-d") 'delete-word)
+;; (global-set-key (kbd "M-<backspace>") 'backward-delete-word)
+
+;; (highlight-current-line-minor-mode t)
+;; (highlight-indentation-mode t)
+;; (setq cursor-type 'bar)
+;; (set-face-background 'highlight-current-line-face "gray10")
+;; global-hl-line-mode
+
+;; ATOM THEME
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/atom-one-dark-theme/")
+(load-theme 'atom-one-dark t)
 
 ;; MELPA PACKAGES
 (require 'package) ;; You might already have this line
@@ -27,6 +210,10 @@
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize) ;; You might already have this line
 
+
+;; snippets expansion with yasnippet
+(yas-global-mode 1)
+
 ;; general
 (require 'auto-complete-config)
 (ac-config-default)
@@ -35,9 +222,13 @@
 
 ;; prog-mode ##########################################
 
-(add-hook 'prog-mode-hook 'highlight-current-line-minor-mode)
-(add-hook 'prog-mode-hook 'highlight-indentation-mode)
-;(setq highlight-current-line-set-bg-color "gray")
+;; (add-hook 'prog-mode-hook 'highlight-current-line-minor-mode)
+;; (add-hook 'prog-mode-hook 'highlight-indentation-mode)
+(setq cursor-type 'bar)
+;;(setq cursor-type "red")
+;; (set-cursor-color "red")
+
+;;(setq highlight-current-line-set-bg-color "gray10")
 
 ;; code folding minor-mode
 (add-hook 'prog-mode-hook 'hs-minor-mode)
@@ -62,8 +253,12 @@
 
 ;; python-mode ########################################
 
-(add-hook 'python-mode-hook 'ac-anaconda-setup)
+(require 'flycheck-pyflakes)
+(add-hook 'python-mode-hook 'flycheck-mode)
+(add-to-list 'flycheck-disabled-checkers 'python-flake8)
+(add-to-list 'flycheck-disabled-checkers 'python-pylint)
 
+(add-hook 'python-mode-hook 'ac-anaconda-setup)
 (add-hook 'python-mode-hook 'anaconda-mode)
 
 (defun my-ac-custom ()
@@ -184,74 +379,7 @@
 (global-set-key (kbd "M-p \"") 'xah-insert-double-quotes)
 (global-set-key (kbd "M-p \'") 'xah-insert-simple-quotes)
 
-; indented newline above current line
-(defun nl_prev_custom ()
-  (interactive)
-  (beginning-of-line)
-  (newline)
-  (previous-line)
-  (indent-according-to-mode)
-)
-(global-set-key (kbd "M-p p") 'nl_prev_custom)
 
-;indented newline below current line
-(defun nl_next_custom ()
-  (interactive)
-  (end-of-line)
-  (newline)
-  (indent-according-to-mode)
-)
-(global-set-key (kbd "M-p n") 'nl_next_custom)
-
-
-;; duplicate current line
-(defun my_copy_line()
-  (interactive)
-  (move-beginning-of-line 1)
-  (kill-line)
-  (yank)
-)
-(global-set-key (kbd "\C-c\C-w") 'my_copy_line)
-
-;; duplicate current line
-(defun my_duplicate_line()
-  (interactive)
-  (move-beginning-of-line 1)
-  (kill-line)
-  (yank)
-  (newline)
-  (yank)
-  (message "current line has been duplicated")
-)
-(global-set-key (kbd "\C-c\C-d") 'my_duplicate_line)
-
-;; reload a modified file on disk in emacs buffer
-(global-set-key (kbd "<f5>") (lambda ()
-                                (interactive)
-                                (revert-buffer t t t)
-                                (message "buffer is reverted")))
-
-;; reload coloration in emacs buffer
-(global-set-key (kbd "<f6>") (lambda ()
-                                (interactive)
-                                (font-lock-fontify-block)
-                                (message "Coloration refreshed in buffer.")))
-
-(global-set-key (kbd "<f11>") 'previous-buffer)
-(global-set-key (kbd "<f12>") 'next-buffer)
-
-
-(global-unset-key (kbd "M-j"))
-(global-unset-key (kbd "M-k"))
-(global-set-key (kbd "M-j") (lambda () (interactive) (other-window 1)))
-(global-set-key (kbd "M-k") (lambda () (interactive) (other-window -1)))
-
-
-; resize current buffer
-(global-set-key (kbd "<C-up>") 'shrink-window)
-(global-set-key (kbd "<C-down>") 'enlarge-window)
-(global-set-key (kbd "<C-left>") 'shrink-window-horizontally)
-(global-set-key (kbd "<C-right>") 'enlarge-window-horizontally)
 
 
 ;; execute python file in emacs shell
