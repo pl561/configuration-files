@@ -1,2 +1,3 @@
-cong files for various software
-objective: improve work environment and workflow
+#Configuration files 
+- fast tools deployment
+- improve work environment and workflow
