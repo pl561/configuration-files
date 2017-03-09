@@ -15,8 +15,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
-
+ '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 120 :width normal)))))
+;; (set-default 'cursor-type 'bar)
+;; (set-cursor-color "#ff0000")
 (electric-pair-mode t)
 
 (load-library "iso-transl") ;; handles circumflex
@@ -67,7 +68,9 @@
   (newline)
   (yank)
   (message "current line has been duplicated")
-)
+  )
+(define-key global-map (kbd "\C-c\C-d") nil)
+(global-unset-key (kbd "\C-c\C-d"))
 (global-set-key (kbd "\C-c\C-d") 'my_duplicate_line)
 
 (global-auto-revert-mode t)
@@ -238,6 +241,11 @@ With argument ARG, do this that many times."
   "remap C-c @ C-c to C-=."
   (local-set-key (kbd "C-=") 'hs-toggle-hiding))
 (add-hook 'hs-minor-mode-hook 'my-new-map)
+
+;; markdown-mode ########################################
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+
 
 ;; octave-mode ########################################
 (autoload 'octave-mode "octave-mod" nil t)
