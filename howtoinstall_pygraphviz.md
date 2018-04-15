@@ -1,3 +1,3 @@
 # pip
-* sudo apt-get install graphviz-dev
+* sudo apt-get install graphviz graphviz-dev
 * pip install pygraphviz
